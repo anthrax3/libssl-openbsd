@@ -1,5 +1,9 @@
+/* o_init.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
+ */
 /* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,30 +48,39 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
  *
  */
 
+#include <e_os.h>
+#include <openssl/err.h>
+
+/* Perform any essential OpenSSL initialization operations.
+ * Currently only sets FIPS callbacks
+ */
+
+void OPENSSL_init(void)
+	{
 #ifdef OPENSSL_FIPS
-
-#ifdef  __cplusplus
-extern "C" {
+	static int done = 0;
+	if (!done)
+		{
+		int_ERR_lib_init();
+#ifdef CRYPTO_MDEBUG
+		CRYPTO_malloc_debug_init();
 #endif
-
-void fips_w_lock(void);
-void fips_w_unlock(void);
-void fips_r_lock(void);
-void fips_r_unlock(void);
-int fips_is_started(void);
-void fips_set_started(void);
-int fips_is_owning_thread(void);
-int fips_set_owning_thread(void);
-void fips_set_selftest_fail(void);
-int fips_clear_owning_thread(void);
-unsigned char *fips_signature_witness(void);
-
-#define FIPS_MAX_CIPHER_TEST_SIZE	16
-
-#ifdef  __cplusplus
-}
+#ifdef OPENSSL_ENGINE
+		int_EVP_MD_init_engine_callbacks();
+		int_EVP_CIPHER_init_engine_callbacks();
+		int_RAND_init_engine_callbacks();
 #endif
+		done = 1;
+		}
 #endif
+	}
+		
+

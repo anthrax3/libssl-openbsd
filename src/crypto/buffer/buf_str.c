@@ -1,5 +1,6 @@
+/* crypto/buffer/buf_str.c */
 /* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,12 +17,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
+ *    licensing@OpenSSL.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -30,7 +31,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -44,30 +45,72 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
  *
  */
 
-#ifdef OPENSSL_FIPS
+#include <stdio.h>
+#include "cryptlib.h"
+#include <openssl/buffer.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+char *BUF_strdup(const char *str)
+	{
+	if (str == NULL) return(NULL);
+	return BUF_strndup(str, strlen(str));
+	}
 
-void fips_w_lock(void);
-void fips_w_unlock(void);
-void fips_r_lock(void);
-void fips_r_unlock(void);
-int fips_is_started(void);
-void fips_set_started(void);
-int fips_is_owning_thread(void);
-int fips_set_owning_thread(void);
-void fips_set_selftest_fail(void);
-int fips_clear_owning_thread(void);
-unsigned char *fips_signature_witness(void);
+char *BUF_strndup(const char *str, size_t siz)
+	{
+	char *ret;
 
-#define FIPS_MAX_CIPHER_TEST_SIZE	16
+	if (str == NULL) return(NULL);
 
-#ifdef  __cplusplus
-}
-#endif
-#endif
+	ret=OPENSSL_malloc(siz+1);
+	if (ret == NULL) 
+		{
+		BUFerr(BUF_F_BUF_STRNDUP,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+	BUF_strlcpy(ret,str,siz+1);
+	return(ret);
+	}
+
+void *BUF_memdup(const void *data, size_t siz)
+	{
+	void *ret;
+
+	if (data == NULL) return(NULL);
+
+	ret=OPENSSL_malloc(siz);
+	if (ret == NULL) 
+		{
+		BUFerr(BUF_F_BUF_MEMDUP,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+	return memcpy(ret, data, siz);
+	}	
+
+size_t BUF_strlcpy(char *dst, const char *src, size_t size)
+	{
+	size_t l = 0;
+	for(; size > 1 && *src; size--)
+		{
+		*dst++ = *src++;
+		l++;
+		}
+	if (size)
+		*dst = '\0';
+	return l + strlen(src);
+	}
+
+size_t BUF_strlcat(char *dst, const char *src, size_t size)
+	{
+	size_t l = 0;
+	for(; size > 0 && *dst; size--, dst++)
+		l++;
+	return l + BUF_strlcpy(dst, src, size);
+	}
