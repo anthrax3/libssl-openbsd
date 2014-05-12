@@ -1511,6 +1511,24 @@ print_stats(BIO * bio, SSL_CTX * ssl_ctx)
 	    SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
+static int write_stdout_buf(char *buf, int i)
+{
+	int written, n;
+	for (written = 0; written < i;) {
+		do {
+			n = write(fileno(stdout), buf + written, i - written);
+		} while (n == -1 && errno == EINTR);
+
+		if (n > 0) {
+			written += n;
+		} else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+			BIO_printf(bio_err, "Could note write to stdout: %s\n", strerror(errno));
+			return -1;
+		}
+	}
+	return written;
+}
+
 static int 
 sv_body(char *hostname, int s, unsigned char *context)
 {
@@ -1769,8 +1787,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 				i = SSL_read(con, (char *) buf, bufsize);
 				switch (SSL_get_error(con, i)) {
 				case SSL_ERROR_NONE:
-					write(fileno(stdout), buf,
-					    (unsigned int) i);
+					write_stdout_buf(buf, i);
 					if (SSL_pending(con))
 						goto again;
 					break;
