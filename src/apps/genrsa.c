@@ -252,7 +252,7 @@ bad:
 		cb_data.password = passout;
 		cb_data.prompt_info = outfile;
 		if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
-			(pem_password_cb *) password_callback, &cb_data))
+			password_callback, &cb_data))
 			goto err;
 	}
 

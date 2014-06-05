@@ -144,7 +144,7 @@ typedef struct pw_cb_data {
 	const char *prompt_info;
 } PW_CB_DATA;
 
-int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
+int password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
